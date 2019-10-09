@@ -1,0 +1,7 @@
+DWButton	KEYWORD1
+tick	KEYWORD2
+isPress KEYWORD2
+isPresses   KEYWORD2
+isRelease   KEYWORD2
+isHold	KEYWORD2
+isClick KEYWORD2
