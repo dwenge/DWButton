@@ -40,14 +40,14 @@ bool DWButton::isClick() {
 }
 
 void DWButton::tick() {
-    uint32_t cur_t = millis();
+    uint32_t cur_time_millis = millis();
     flag &= ~(DW_FLAG_PRESS | DW_FLAG_RELEASE | DW_FLAG_HOLD | DW_FLAG_CLICK);
-    if (_timer < cur_t) {
-        check(cur_t);
-        _timer = cur_t + DW_TICK_DELAY;
+    if (_timer < cur_time_millis) {
+        check(&cur_time_millis);
+        _timer = cur_time_millis + DW_TICK_DELAY;
     }
 }
-void DWButton::check(uint32_t cur_time) {
+void DWButton::check(uint32_t *cur_time) {
     uint16_t sig = analogRead(_pin);
     if ((sig > _signal - DW_SIGNAL_ERROR) && (sig < _signal + DW_SIGNAL_ERROR)) {
         flag |= DW_FLAG_PRESSES;
@@ -56,16 +56,16 @@ void DWButton::check(uint32_t cur_time) {
             flag &= ~DW_FLAG_LAST_HOLD;
         }
         if (_hold_end > 0) {
-            if ((flag & DW_FLAG_LAST_HOLD)==0 && _hold_end < cur_time) {
+            if ((flag & DW_FLAG_LAST_HOLD)==0 && _hold_end < *cur_time) {
                 _hold_end = 0;
                 flag |= DW_FLAG_HOLD | DW_FLAG_LAST_HOLD;
             }
         } else if ((flag & DW_FLAG_LAST_HOLD)==0) {
-            _hold_end = cur_time + _hold_time;
+            _hold_end = *cur_time + _hold_time;
         }
     } else {
         flag &= ~DW_FLAG_PRESSES;
-        if ((flag & DW_FLAG_LAST_PRESS)>0) {
+        if (flag & DW_FLAG_LAST_PRESS) {
             flag |= DW_FLAG_RELEASE;
             flag &= ~DW_FLAG_LAST_PRESS;
 
