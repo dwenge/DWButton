@@ -7,11 +7,20 @@
 #define DW_SIGNAL_ERROR 15
 #define DW_HOLD_TIME 1000
 
+#define DW_FLAG_PRESS       B00000001
+#define DW_FLAG_PRESSES     B00000010
+#define DW_FLAG_CLICK       B00000100
+#define DW_FLAG_HOLD        B00001000
+#define DW_FLAG_RELEASE     B00010000
+#define DW_FLAG_LAST_PRESS  B00100000
+#define DW_FLAG_LAST_HOLD   B01000000
+
 class DWButton
 {
     public:
         DWButton(byte pin, uint16_t signal);
         DWButton(byte pin, uint16_t signal, uint16_t hold_time);
+        bool isActive();
         bool isPress();
         bool isPresses();
         bool isHold();
@@ -24,15 +33,9 @@ class DWButton
         byte _pin;
         uint16_t _signal;
         uint16_t _hold_time = DW_HOLD_TIME;
-        bool _is_hold = false;
-        bool _last_hold = false;
         uint32_t _hold_end = 0;
-        bool _is_presses = false;
-        bool _is_press = false;
-        bool _is_release = false;
         void check(uint32_t cur_time);
-        bool _last_press = false;
-        bool _is_click = false;
+        uint8_t flag = 0;
 };
 
 #endif

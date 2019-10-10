@@ -14,32 +14,34 @@ DWButton::DWButton(uint8_t pin, uint16_t signal, uint16_t hold_time) {
     _hold_time = hold_time;
 }
 
+bool DWButton::isActive() {
+    uint16_t sig = analogRead(_pin);
+    return (sig > _signal - DW_SIGNAL_ERROR) && (sig < _signal + DW_SIGNAL_ERROR);
+}
+
 bool DWButton::isPresses() {
-    return _is_presses;
+    return flag & DW_FLAG_PRESSES;
 }
 
 bool DWButton::isPress() {
-    return _is_press;
+    return flag & DW_FLAG_PRESS;
 }
 
 bool DWButton::isHold() {
-    return _is_hold;
+    return flag & DW_FLAG_HOLD;
 }
 
 bool DWButton::isRelease() {
-    return _is_release;
+    return flag & DW_FLAG_RELEASE;
 }
 
 bool DWButton::isClick() {
-    return _is_click;
+    return flag & DW_FLAG_CLICK;
 }
 
 void DWButton::tick() {
     uint32_t cur_t = millis();
-    _is_press = false;
-    _is_release = false;
-    _is_hold = false;
-    _is_click = false;
+    flag &= ~(DW_FLAG_PRESS | DW_FLAG_RELEASE | DW_FLAG_HOLD | DW_FLAG_CLICK);
     if (_timer < cur_t) {
         check(cur_t);
         _timer = cur_t + DW_TICK_DELAY;
@@ -48,30 +50,28 @@ void DWButton::tick() {
 void DWButton::check(uint32_t cur_time) {
     uint16_t sig = analogRead(_pin);
     if ((sig > _signal - DW_SIGNAL_ERROR) && (sig < _signal + DW_SIGNAL_ERROR)) {
-        _is_presses = true;
-        if (!_last_press) {
-            _is_press = true;
-            _last_press = true;
-            _last_hold = false;
+        flag |= DW_FLAG_PRESSES;
+        if ((flag & DW_FLAG_LAST_PRESS)==0) {
+            flag |= DW_FLAG_PRESS | DW_FLAG_LAST_PRESS;
+            flag &= ~DW_FLAG_LAST_HOLD;
         }
         if (_hold_end > 0) {
-            if (!_last_hold && _hold_end < cur_time) {
-                _is_hold = true;
-                _last_hold = true;
+            if ((flag & DW_FLAG_LAST_HOLD)==0 && _hold_end < cur_time) {
                 _hold_end = 0;
+                flag |= DW_FLAG_HOLD | DW_FLAG_LAST_HOLD;
             }
-        } else if (!_last_hold) {
+        } else if ((flag & DW_FLAG_LAST_HOLD)==0) {
             _hold_end = cur_time + _hold_time;
         }
     } else {
-        _is_presses = false;
-        if (_last_press) {
-            _is_release = true;
-            _last_press = false;
+        flag &= ~DW_FLAG_PRESSES;
+        if ((flag & DW_FLAG_LAST_PRESS)>0) {
+            flag |= DW_FLAG_RELEASE;
+            flag &= ~DW_FLAG_LAST_PRESS;
 
             if (_hold_end > 0) {
-                _is_click = true;
                 _hold_end = 0;
+                flag |= DW_FLAG_CLICK;
             }
         }
     }
